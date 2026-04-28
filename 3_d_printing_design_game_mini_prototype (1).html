@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Printing Design Game</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; background:#0f172a; color:white; margin:0; display:flex; height:100vh; }
+.sidebar { width:300px; background:#1e293b; padding:20px; box-sizing:border-box; }
+.main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+h1 { font-size:20px; }
+label { display:block; margin-top:15px; }
+input[type=range] { width:100%; }
+.output { margin-top:20px; }
+canvas { border-radius:20px; }
+.good { color:#22c55e; }
+.warn { color:#facc15; }
+.bad { color:#ef4444; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+<h1>Design Panel</h1>
+
+<label>Size</label>
+<input type="range" id="size" min="1" max="10" value="5" oninput="updateDesign()">
+
+<label>Thickness</label>
+<input type="range" id="thickness" min="1" max="10" value="5" oninput="updateDesign()">
+
+<label>Complexity</label>
+<input type="range" id="complexity" min="1" max="10" value="5" oninput="updateDesign()">
+
+<label>Color</label>
+<input type="color" id="color" value="#38bdf8" oninput="updateDesign()">
+
+<div class="output" id="output"></div>
+</div>
+
+<div class="main">
+<h1>3D Print Preview (Live)</h1>
+<div id="renderArea"></div>
+</div>
+
+<script>
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer();
+renderer.setSize(250, 250);
+document.getElementById("renderArea").appendChild(renderer.domElement);
+
+let geometry = new THREE.BoxGeometry(1,1,1);
+let material = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.2, roughness: 0.4 });
+let cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+// Lighting for real 3D shading
+let ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+
+let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(3, 3, 5);
+scene.add(directionalLight);
+
+camera.position.z = 3;
+
+function animate() {
+    requestAnimationFrame(animate);
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+    renderer.render(scene, camera);
+}
+animate();
+
+function updateDesign() {
+    let size = document.getElementById('size').value;
+    let thickness = document.getElementById('thickness').value;
+    let complexity = document.getElementById('complexity').value;
+    let color = document.getElementById('color').value;
+
+    let output = "";
+
+    if (thickness < 3) {
+        output += "<div class='bad'>❌ Too thin - likely to break</div>";
+    } else if (thickness < 5) {
+        output += "<div class='warn'>⚠️ Somewhat weak</div>";
+    } else {
+        output += "<div class='good'>✅ Strong structure</div>";
+    }
+
+    if (complexity > 7) {
+        output += "<div class='warn'>⚠️ May require supports</div>";
+    }
+
+    let time = size * complexity;
+    let cost = size * thickness;
+
+    output += `<div>⏱ Print Time: ${time} hrs</div>`;
+    output += `<div>💲 Cost: $${cost}</div>`;
+
+    document.getElementById('output').innerHTML = output;
+
+
+    // Update cube color in real time
+    cube.material.color.set(color);
+
+    // REAL-TIME scaling
+    cube.scale.set(size/5, thickness/5, complexity/5);
+}
+
+// Initialize once
+updateDesign();
+</script>
+
+</body>
+</html>
